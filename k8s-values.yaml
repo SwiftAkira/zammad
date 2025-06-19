@@ -1,0 +1,96 @@
+# Helm values for Zammad Custom Deployment
+# Use this file with: helm upgrade zammad-release zammad/zammad-helm -f k8s-values.yaml
+
+# Custom Docker image configuration
+image:
+  repository: yourdockeruser/zammad-custom  # Replace with your Docker registry
+  tag: latest
+  pullPolicy: Always
+
+# Environment-specific settings
+environment: production
+
+# Resources (adjust based on your cluster capacity)
+resources:
+  web:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi" 
+      cpu: "500m"
+  worker:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: zammad.yourcompany.com  # Replace with your domain
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: zammad-tls
+      hosts:
+        - zammad.yourcompany.com
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "your-secure-password"  # Change this!
+    database: zammad
+  primary:
+    persistence:
+      size: 20Gi
+
+# Redis configuration  
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      size: 8Gi
+
+# Elasticsearch configuration
+elasticsearch:
+  enabled: true
+  replicas: 1
+  minimumMasterNodes: 1
+  persistence:
+    size: 30Gi
+
+# Custom environment variables
+extraEnv:
+  - name: CUSTOM_VERSION
+    value: "1.0.0"
+  - name: DEPLOYMENT_REGION
+    value: "eu-north-1"  # AWS region preference
+
+# Persistence for uploads and storage
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: gp2  # AWS EBS storage class
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+
+# Auto-scaling (optional)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70 
